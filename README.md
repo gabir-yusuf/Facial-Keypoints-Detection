@@ -42,3 +42,9 @@ to install a few required pip packages, which are specified in the requirements 
 ## Dataset
 All of the data needed to train a neural network is in the in the subdirectory `data`. In this folder are training and tests set of image/keypoint data, and their respective csv files. 
 
+
+# Testing:
+1. create a folder in the project directroy  called *saved_models*
+1. download the pretrained model parameters from this [link](https://drive.google.com/open?id=1pVaCg3CNFR6teN8iGFCmKJ7fYLWiQD2V) and move it to*saved_models* folder
+3. to test of batches of images from the test dataset run `python test_on_batches.py`
+4. to test on single image, use the jupyter notebook `test.ipynb`
