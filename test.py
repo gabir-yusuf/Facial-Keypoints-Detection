@@ -24,8 +24,6 @@ def inference(model, img):
     model.eval()
 
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    img = cv2.resize(img, (227, 227))
-
     img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     img = img / 255.0
     img = cv2.resize(img, (227, 227))
@@ -103,6 +101,7 @@ def add_hat(hat_img, key_pts, img_copy):
 if __name__ == "__main__":
     net = AlexNet()
     image = cv2.imread('images/img.jpg')
+    image = cv2.resize(image, (227, 227))
     net.load_state_dict(torch.load('./saved_models/keypoints_model.pth'))
 
     # inference
