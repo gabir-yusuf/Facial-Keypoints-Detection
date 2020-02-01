@@ -2,9 +2,9 @@
 
 
 [image1]: ./images/img.jpg "input"
-[image2]: ./fig2.png "keypoint detection"
-[image3]: ./fig1.png "glasses"
-[image4]: ./fig3.png "hat"
+[image2]: ./images/fig2.png "keypoint detection"
+[image3]: ./images/fig1.png "glasses"
+[image4]: ./images/fig3.png "hat"
 
 [image3]: ./images/mnist.PNG "mnist Output"
 [image4]: ./images/faces.PNG "CelebA Output"
