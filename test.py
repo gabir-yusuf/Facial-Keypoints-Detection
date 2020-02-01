@@ -23,10 +23,8 @@ def inference(model, img):
     # activate evaluation mode
     model.eval()
 
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     img = img / 255.0
-    img = cv2.resize(img, (227, 227))
 
     img = np.expand_dims(img, 0)
     img = np.expand_dims(img, 0)
@@ -102,6 +100,7 @@ if __name__ == "__main__":
     net = AlexNet()
     image = cv2.imread('images/img.jpg')
     image = cv2.resize(image, (227, 227))
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     net.load_state_dict(torch.load('./saved_models/keypoints_model.pth'))
 
     # inference
