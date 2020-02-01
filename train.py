@@ -1,8 +1,3 @@
-import matplotlib.pylab as plt
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
 from data_load import FacialKeypointsDataset
