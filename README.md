@@ -1,7 +1,7 @@
 # Facial-Keypoints-Detection
 
 
-[image1]: ./img.jpg "input"
+[image1]: ./images/img.jpg "input"
 [image2]: ./fig2.png "keypoint detection"
 [image3]: ./fig1.png "glasses"
 [image4]: ./fig3.png "hat"
