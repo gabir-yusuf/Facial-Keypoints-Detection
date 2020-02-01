@@ -1,129 +1,125 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
 import cv2
 import torch
 from models import AlexNet
 from torch.autograd import Variable
 
 import warnings
+
 warnings.simplefilter("ignore")
 
 
-# Detect all faces in an image
-# load in a haar cascade cassifier fro detecting frontal faces
-face_cascade = cv2.CascadeClassifier(
-    './detectors/haarcascade_frontalface_default.xml')
-
-
-net = AlexNet()
-# loading the best saved model parameters
-net.load_state_dict(torch.load(
-    './saved_models/keypoints_model_AlexNet_50epochs.pth'))
-
-# perepate the net for testing mode
-net.eval()
-
-
-# image = cv2.imread('imgs/10.jpg')
-image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-
-faces = face_cascade.detectMultiScale(image, 1.2, 2)
-
-# make a copy of the original image to plot detections on
-image_with_detections = image.copy()
-
-# loop over the detected faces
-for (x,y,w,h) in faces:
-    # draw a rectangle around each detected face
-    cv2.rectangle(image_with_detections, (x,y), (x+w, y+h), (255, 0, 0), 3)
-    plt.imshow(image_with_detections)
+def show_all_keypoints(img, key_pts):
+    """
+    Visualizing the image and the keypoints on it.
+    """
+    plt.imshow(img)
+    plt.scatter(key_pts[:, 0], key_pts[:, 1], s=40, marker='.', c='g')
     plt.show()
 
 
+def inference(model, img):
+    # activate evaluation mode
+    model.eval()
+
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = cv2.resize(img, (227, 227))
+
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    img = img / 255.0
+    img = cv2.resize(img, (227, 227))
+
+    img = np.expand_dims(img, 0)
+    img = np.expand_dims(img, 0)
+
+    img_torch = Variable(torch.from_numpy(img))
+    img_torch = img_torch.type(torch.FloatTensor)
+    return model(img_torch)
 
 
-# loading in the trained model
+def add_sunglasses(glasses_img, key_pts, img_copy):
+    # determine the top-left location for sunglasses which is the 17 point
+    x = int(key_pts[17, 0])
+    y = int(key_pts[17, 1])
+
+    # setting the height and width of sunglasses
+    # h = length of nose, w = left to right eyebrow edges
+    h = int(abs(key_pts[27, 1] - key_pts[34, 1])) + 3
+    w = int(abs(key_pts[17, 0] - key_pts[26, 0])) + 3
+
+    # resize sunglasses
+    new_sunglasses = cv2.resize(glasses_img, (w, h), interpolation=cv2.INTER_CUBIC)
+
+    # get the region of interest on the face to change
+    roi_color = img_copy[y:y + h, x + 5:x + w + 5]
+
+    # find all non-transparent pts
+    ind = np.argwhere(new_sunglasses[:, :, 3] > 0)
+
+    # for each non-transparent point, replace the original image pixel with that of the new_sunglasses
+    for i in range(3):
+        roi_color[ind[:, 0], ind[:, 1],
+                  i] = new_sunglasses[ind[:, 0], ind[:, 1], i]
+
+    # set the area of the image to the changed region with sunglasses
+    image_copy[y:y + h, x + 5:x + w + 5] = roi_color
+
+    # display the result!
+    plt.imshow(image_copy)
+    plt.show()
 
 
+def add_hat(hat_img, key_pts, img_copy):
+    # determine the top-left location for hat
+    x = int(key_pts[18, 0]) - 78
+    y = int(key_pts[18, 1]) - 100
 
-image_copy = np.copy(image)
+    # Determine the height and width of the hat
+    h = 130
+    w = 210
+
+    # resize the hat
+    hat_img = cv2.resize(hat_img, (w, h), interpolation=cv2.INTER_CUBIC)
+
+    # get region of interest on the face to change
+    roi_color = img_copy[y:y + h, x:x + w]
+
+    # find all non-transparent pts
+    ind = np.argwhere(hat_img[:, :, 3] > 0)
+
+    for i in range(3):
+        roi_color[ind[:, 0], ind[:, 1],
+                  i] = hat_img[ind[:, 0], ind[:, 1], i]
+
+    # set the area of the image to the changed region with hat
+    img_copy[y:y + h, x:x + w] = roi_color
+
+    # display the result!
+    plt.imshow(img_copy)
+    plt.show()
 
 
-def show_all_keypoints(image, keypoints):
-    """
-    Visuzlizing the image and the keypoints on it.
-    """
-    plt.figure(figsize=(5, 5))
+if __name__ == "__main__":
+    net = AlexNet()
+    image = cv2.imread('images/img.jpg')
+    net.load_state_dict(torch.load('./saved_models/keypoints_model.pth'))
 
+    # inference
+    keypoints = inference(net, image)
+
+    # convert to numpy array, denormalize the keypoints, reshape to (2 x 68)
     keypoints = keypoints.data.numpy()
-    # Becuase of normalization, keypoints won't be placed if they won't reutrn to values before noramlization
-    keypoints = keypoints * 48.0 + 48
-    # reshape to 2 X 68 keypoint for the fase
+    keypoints = keypoints * 50.0 + 100
     keypoints = np.reshape(keypoints, (68, -1))
 
-    image = image.numpy()
-    # Convert to numpy image shape (H x W x C)
-    image = np.transpose(image, (1, 2, 0))
-    image = np.squeeze(image)
-    plt.imshow(image, cmap='gray')
-    plt.scatter(keypoints[:, 0], keypoints[:, 1], s=40, marker='.', c='m')
+    image_copy = np.copy(image)
+    show_all_keypoints(image_copy, keypoints)
 
-    # plt.show()
+    # Adding Sunglasses
+    sunglasses_img = cv2.imread('images/sunglasses.png', cv2.IMREAD_UNCHANGED)
+    add_sunglasses(sunglasses_img, keypoints, image_copy)
 
-
-
-
-# loop over the detected faces from your cascade
-for (x,y,w,h) in faces:
-    # select the region of interest that is the face in the image
-    roi = image_copy[y-50:y+h+50, x-40:x+w+40]
-    width_roi = roi.shape[1] # needed for scaling points
-    height_roi = roi.shape[0] # needed for scaling points
-    # Make a copy from roi to be used as background to display final keypoints.
-    roi_copy = np.copy(roi)
-
-    # convert to grayscale
-    roi = cv2.cvtColor(roi, cv2.COLOR_RGB2GRAY)
-
-    # Normalize the grayscale image
-    roi = roi/255.0
-
-    # rescale the detected face to be the expected square size
-    roi = cv2.resize(roi, (227, 227))
-
-    roi = np.expand_dims(roi, 0)
-    roi = np.expand_dims(roi, 0)
-    print(roi.shape)
-
-    roi_torch = Variable(torch.from_numpy(roi))
-
-    roi_torch = roi_torch.type(torch.FloatTensor)
-
-    keypoints = net(roi_torch)
-    keypoints = keypoints
-
-    show_all_keypoints(roi_torch.squeeze(0), keypoints)
-
-
-cap = cv2.VideoCapture(0)
-
-while 1:
-    ret, img = cap.read()
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # add this
-    # image, reject levels level weights.
-    object = object_cascade.detectMultiScale(gray, 50, 50)
-
-    # add this
-    for (x, y, w, h) in object:
-        cv2.rectangle(img, (x, y), (x+w, y+h), (255, 255, 0), 2)
-
-    cv2.imshow('img', img)
-    k = cv2.waitKey(30) & 0xff
-    if k == 27:
-        break
-
-cap.release()
-cv2.destroyAllWindows()
+    # Adding Hat
+    hat = cv2.imread('images/straw_hat.png', cv2.IMREAD_UNCHANGED)
+    add_hat(hat, keypoints, image_copy)
