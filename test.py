@@ -20,6 +20,9 @@ def show_all_keypoints(img, key_pts):
 
 
 def inference(model, img):
+    """
+    Forward propagate the input image through the model
+    """
     # activate evaluation mode
     model.eval()
 
